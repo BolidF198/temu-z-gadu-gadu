@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Komunikator</title>
+</head>
+
+<body>
+
+<h2>Komunikator</h2>
+
+<div id="chat"></div>
+
+<input id="name" placeholder="nazwa">
+<input id="msg" placeholder="wiadomość">
+<button onclick="send()">Wyślij</button>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+   apiKey: "AIzaSyDskJZp0Vd3DRgmz_r7_AgVxUg3kx1W0j0",
+    authDomain: "komunikator-18cb1.firebaseapp.com",
+    projectId: "komunikator-18cb1",
+    storageBucket: "komunikator-18cb1.firebasestorage.app",
+    messagingSenderId: "880269350736",
+    appId: "1:880269350736:web:2da047f43fe93c792dbe55"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+function send(){
+
+let name=document.getElementById("name").value
+let msg=document.getElementById("msg").value
+
+push(ref(db,"messages"),{
+name:name,
+msg:msg
+})
+
+document.getElementById("msg").value=""
+
+}
+
+window.send=send
+
+onChildAdded(ref(db,"messages"),(data)=>{
+
+let m=data.val()
+
+document.getElementById("chat").innerHTML+=
+"<p><b>"+m.name+":</b> "+m.msg+"</p>"
+
+})
+
+</script>
+
+</body>
+</html>
