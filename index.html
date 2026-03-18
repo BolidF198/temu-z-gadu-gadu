@@ -1,64 +1,660 @@
 <!DOCTYPE html>
-<html>
+<html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>Komunikator</title>
-</head>
+<title>⚡ Multiplayer Clicker</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --border: #2a2a3a;
+    --accent: #f0c040;
+    --accent2: #e05a30;
+    --text: #e8e8f0;
+    --muted: #666680;
+  }
 
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Space Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── SPLASH ── */
+  #splash {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    gap: 24px;
+  }
+
+  #splash h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(48px, 10vw, 96px);
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-shadow: 0 0 40px rgba(240,192,64,0.4);
+    line-height: 1;
+  }
+
+  #splash p {
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  #nameInput {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 18px;
+    padding: 14px 20px;
+    width: 280px;
+    text-align: center;
+    outline: none;
+    letter-spacing: 2px;
+    transition: border-color 0.2s;
+  }
+  #nameInput:focus { border-color: var(--accent); }
+  #nameInput::placeholder { color: var(--muted); font-size: 14px; }
+
+  #startBtn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 3px;
+    padding: 14px 48px;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 0 0 rgba(240,192,64,0);
+  }
+  #startBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(240,192,64,0.35);
+  }
+  #startBtn:active { transform: scale(0.97); }
+
+  /* ── GAME ── */
+  #game { display: none; }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  header .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 3px;
+    color: var(--accent);
+  }
+
+  #playerTag {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 2px;
+  }
+
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 0;
+    height: calc(100vh - 61px);
+  }
+
+  /* ── LEFT PANEL ── */
+  .left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    padding: 32px;
+    border-right: 1px solid var(--border);
+  }
+
+  #scoreDisplay {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(72px, 12vw, 128px);
+    color: var(--accent);
+    line-height: 1;
+    text-shadow: 0 0 60px rgba(240,192,64,0.25);
+    transition: transform 0.05s;
+  }
+
+  #scoreDisplay.pop { transform: scale(1.04); }
+
+  .score-label {
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: -20px;
+  }
+
+  #clickBtn {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #f5d060, var(--accent2));
+    border: none;
+    cursor: pointer;
+    font-size: 56px;
+    box-shadow: 0 0 0 0 rgba(240,192,64,0.4), inset 0 -6px 0 rgba(0,0,0,0.3);
+    transition: transform 0.08s, box-shadow 0.1s;
+    user-select: none;
+    position: relative;
+  }
+
+  #clickBtn:hover {
+    box-shadow: 0 0 40px rgba(240,192,64,0.3), inset 0 -6px 0 rgba(0,0,0,0.3);
+  }
+
+  #clickBtn:active {
+    transform: scale(0.92) translateY(4px);
+    box-shadow: 0 0 20px rgba(240,192,64,0.2), inset 0 -2px 0 rgba(0,0,0,0.3);
+  }
+
+  .stats-row {
+    display: flex;
+    gap: 32px;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    color: var(--text);
+  }
+
+  .stat-lbl {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ── SHOP ── */
+  .shop {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+    width: 100%;
+    max-width: 340px;
+  }
+
+  .shop-title {
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--muted);
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  .item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    transition: border-color 0.2s;
+  }
+
+  .item:hover { border-color: #444460; }
+
+  .item-info { flex: 1; }
+  .item-name { font-size: 13px; font-weight: 700; }
+  .item-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .item-count {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: var(--accent);
+    min-width: 28px;
+    text-align: center;
+  }
+
+  .buy-btn {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 6px 12px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+
+  .buy-btn:hover { background: var(--accent); color: #000; }
+  .buy-btn:active { transform: scale(0.96); }
+
+  /* ── RIGHT PANEL ── */
+  .right {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--muted);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .live-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #40c060;
+    animation: pulse 1.5s infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  #rankingList {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 0;
+  }
+
+  #rankingList::-webkit-scrollbar { width: 4px; }
+  #rankingList::-webkit-scrollbar-track { background: transparent; }
+  #rankingList::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .rank-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 24px;
+    gap: 14px;
+    transition: background 0.15s;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+
+  .rank-row:hover { background: rgba(255,255,255,0.02); }
+  .rank-row.me { background: rgba(240,192,64,0.06); }
+
+  .rank-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    color: var(--muted);
+    min-width: 24px;
+    text-align: center;
+  }
+
+  .rank-num.gold { color: #f0c040; }
+  .rank-num.silver { color: #b0b8c8; }
+  .rank-num.bronze { color: #c08050; }
+
+  .rank-name {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .rank-name.me { color: var(--accent); }
+
+  .rank-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    color: var(--text);
+  }
+
+  .rank-auto {
+    font-size: 10px;
+    color: var(--muted);
+    min-width: 36px;
+    text-align: right;
+  }
+
+  /* ── FLOATERS ── */
+  .floater {
+    position: fixed;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--accent);
+    pointer-events: none;
+    animation: floatUp 0.8s forwards;
+    z-index: 999;
+  }
+
+  @keyframes floatUp {
+    0%   { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-80px); opacity: 0; }
+  }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #1a1a2a;
+    border: 1px solid var(--border);
+    padding: 12px 24px;
+    font-size: 13px;
+    letter-spacing: 1px;
+    transition: transform 0.3s;
+    z-index: 200;
+  }
+
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 700px) {
+    .main-grid { grid-template-columns: 1fr; height: auto; }
+    .left { border-right: none; border-bottom: 1px solid var(--border); padding: 24px 16px; }
+    .right { height: 50vh; }
+    header { padding: 12px 16px; }
+  }
+</style>
+</head>
 <body>
 
-<h2>Komunikator</h2>
+<!-- SPLASH -->
+<div id="splash">
+  <h1>⚡ CLICKER</h1>
+  <p>multiplayer · real-time · ranking</p>
+  <input id="nameInput" type="text" maxlength="16" placeholder="Twoja nazwa gracza" autocomplete="off" />
+  <button id="startBtn">WCHODZĘ</button>
+</div>
 
-<div id="chat"></div>
+<!-- GAME -->
+<div id="game">
+  <header>
+    <div class="logo">⚡ CLICKER</div>
+    <div id="playerTag">GRACZ: —</div>
+  </header>
 
-<input id="name" placeholder="nazwa">
-<input id="msg" placeholder="wiadomość">
-<button onclick="send()">Wyślij</button>
+  <div class="main-grid">
+    <!-- LEFT -->
+    <div class="left">
+      <div>
+        <div id="scoreDisplay">0</div>
+        <div class="score-label">punkty</div>
+      </div>
+
+      <button id="clickBtn">💥</button>
+
+      <div class="stats-row">
+        <div class="stat">
+          <div class="stat-val" id="statBoost">1</div>
+          <div class="stat-lbl">za klik</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val" id="statAuto">0</div>
+          <div class="stat-lbl">auto/s</div>
+        </div>
+      </div>
+
+      <div class="shop">
+        <div class="shop-title">sklep</div>
+        <div class="item">
+          <div class="item-info">
+            <div class="item-name">Auto Clicker</div>
+            <div class="item-desc">+1 punkt na sekundę</div>
+          </div>
+          <div class="item-count" id="autoCount">0</div>
+          <button class="buy-btn" id="buyAutoBtn">50 PKT</button>
+        </div>
+        <div class="item">
+          <div class="item-info">
+            <div class="item-name">Boost Kliknięcia</div>
+            <div class="item-desc">+1 punkt za klik</div>
+          </div>
+          <div class="item-count" id="boostCount">1</div>
+          <button class="buy-btn" id="buyBoostBtn">100 PKT</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right">
+      <div class="panel-header">
+        <div class="live-dot"></div>
+        ranking na żywo
+      </div>
+      <div id="rankingList"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
 
 <script type="module">
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+import { getDatabase, ref, set, update, onValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
 const firebaseConfig = {
-   apiKey: "AIzaSyDskJZp0Vd3DRgmz_r7_AgVxUg3kx1W0j0",
-    authDomain: "komunikator-18cb1.firebaseapp.com",
-    databaseURL: "https://komunikator-18cb1-default-rtdb.europe-west1.firebasedatabase.app", 
-    projectId: "komunikator-18cb1",
-    storageBucket: "komunikator-18cb1.firebasestorage.app",
-    messagingSenderId: "880269350736",
-    appId: "1:880269350736:web:2da047f43fe93c792dbe55"
+  apiKey: "AIzaSyCKVA4Q1CQWFkLGBo5HretmpLKxb-GI3eA",
+  authDomain: "clicker-80232.firebaseapp.com",
+  databaseURL: "https://clicker-80232-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "clicker-80232",
+  storageBucket: "clicker-80232.firebasestorage.app",
+  messagingSenderId: "943359414711",
+  appId: "1:943359414711:web:a03d7d0eda4d0ea97c5832"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-function send(){
-
-let name=document.getElementById("name").value
-let msg=document.getElementById("msg").value
-
-push(ref(db,"messages"),{
-name:name,
-msg:msg
-})
-
-document.getElementById("msg").value=""
-
+// ── Stan lokalny ──
+let playerId = localStorage.getItem("clickerPlayerId");
+if (!playerId) {
+  playerId = "p_" + Math.random().toString(36).slice(2, 9);
+  localStorage.setItem("clickerPlayerId", playerId);
 }
 
-window.send=send
+let playerName = "";
+let score = 0;
+let boost = 1;
+let auto = 0;
+let initialized = false; // czy już załadowaliśmy dane z Firebase
 
-onChildAdded(ref(db,"messages"),(data)=>{
+const playerRef = ref(db, "players/" + playerId);
 
-let m=data.val()
+// ── SPLASH → START ──
+document.getElementById("startBtn").addEventListener("click", startGame);
+document.getElementById("nameInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") startGame();
+});
 
-document.getElementById("chat").innerHTML+=
-"<p><b>"+m.name+":</b> "+m.msg+"</p>"
+function startGame() {
+  const raw = document.getElementById("nameInput").value.trim();
+  if (!raw) { toast("Wpisz nazwę! 😤"); return; }
+  playerName = raw.slice(0, 16);
 
-})
+  // Zapisz nazwę do localStorage
+  localStorage.setItem("clickerName", playerName);
 
+  document.getElementById("splash").style.display = "none";
+  document.getElementById("game").style.display = "block";
+  document.getElementById("playerTag").textContent = "GRACZ: " + playerName.toUpperCase();
+
+  initPlayer();
+}
+
+// Jeśli gracz już grał — wstaw jego nazwę
+const savedName = localStorage.getItem("clickerName");
+if (savedName) document.getElementById("nameInput").value = savedName;
+
+// ── INIT PLAYER ──
+function initPlayer() {
+  // Odczytaj raz dane z Firebase
+  onValue(playerRef, (snap) => {
+    if (!initialized) {
+      initialized = true;
+      if (snap.exists()) {
+        const d = snap.val();
+        score = d.score || 0;
+        boost = d.boost || 1;
+        auto  = d.auto  || 0;
+        // Zaktualizuj nazwę (mogła się zmienić)
+        update(playerRef, { name: playerName, lastSeen: Date.now() });
+      } else {
+        score = 0; boost = 1; auto = 0;
+        set(playerRef, { name: playerName, score, boost, auto, lastSeen: Date.now() });
+      }
+      updateUI();
+    }
+    // Po inicjalizacji ignorujemy zdalne aktualizacje własnego gracza
+    // (żeby nie nadpisywały lokalnego stanu podczas klikania)
+  }, { onlyOnce: true });  // <-- kluczowe: odczyt tylko RAZ
+}
+
+// ── SAVE do Firebase ──
+function save() {
+  update(playerRef, { score, boost, auto, name: playerName, lastSeen: Date.now() });
+}
+
+// ── UI ──
+function updateUI() {
+  document.getElementById("scoreDisplay").textContent = score;
+  document.getElementById("statBoost").textContent = boost;
+  document.getElementById("statAuto").textContent = auto;
+  document.getElementById("autoCount").textContent = auto;
+  document.getElementById("boostCount").textContent = boost;
+}
+
+// ── KLIK ──
+document.getElementById("clickBtn").addEventListener("click", (e) => {
+  if (!initialized) return;
+  score += boost;
+  updateUI();
+  save();
+  popScore();
+  spawnFloater(e.clientX, e.clientY, "+" + boost);
+});
+
+function popScore() {
+  const el = document.getElementById("scoreDisplay");
+  el.classList.remove("pop");
+  void el.offsetWidth;
+  el.classList.add("pop");
+  setTimeout(() => el.classList.remove("pop"), 100);
+}
+
+function spawnFloater(x, y, text) {
+  const f = document.createElement("div");
+  f.className = "floater";
+  f.textContent = text;
+  f.style.left = (x - 20) + "px";
+  f.style.top  = (y - 20) + "px";
+  document.body.appendChild(f);
+  setTimeout(() => f.remove(), 800);
+}
+
+// ── AUTO CLICKER ──
+setInterval(() => {
+  if (!initialized || auto === 0) return;
+  score += auto;
+  updateUI();
+  save();
+}, 1000);
+
+// ── SKLEP ──
+document.getElementById("buyAutoBtn").addEventListener("click", () => {
+  if (!initialized) return;
+  if (score >= 50) {
+    score -= 50; auto += 1;
+    updateUI(); save();
+    toast("Auto Clicker kupiony! 🤖");
+  } else toast("Brakuje " + (50 - score) + " punktów 😤");
+});
+
+document.getElementById("buyBoostBtn").addEventListener("click", () => {
+  if (!initialized) return;
+  if (score >= 100) {
+    score -= 100; boost += 1;
+    updateUI(); save();
+    toast("Boost aktywowany! ⚡");
+  } else toast("Brakuje " + (100 - score) + " punktów 😤");
+});
+
+// ── RANKING LIVE ──
+onValue(ref(db, "players"), (snap) => {
+  const data = snap.val() || {};
+  const now = Date.now();
+  const ACTIVE_WINDOW = 5 * 60 * 1000; // 5 minut
+
+  let players = Object.entries(data)
+    .map(([id, d]) => ({ id, ...d }))
+    .filter(p => p.name && (now - (p.lastSeen || 0)) < ACTIVE_WINDOW)
+    .sort((a, b) => (b.score || 0) - (a.score || 0));
+
+  const medals = ["gold", "silver", "bronze"];
+  const list = document.getElementById("rankingList");
+  list.innerHTML = "";
+
+  if (players.length === 0) {
+    list.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:12px;letter-spacing:2px;">BRAK AKTYWNYCH GRACZY</div>';
+    return;
+  }
+
+  players.forEach((p, i) => {
+    const isMe = p.id === playerId;
+    const row = document.createElement("div");
+    row.className = "rank-row" + (isMe ? " me" : "");
+
+    const numClass = "rank-num" + (medals[i] ? " " + medals[i] : "");
+    row.innerHTML = `
+      <div class="${numClass}">${i + 1}</div>
+      <div class="rank-name${isMe ? " me" : ""}">${escHtml(p.name || "???")}${isMe ? " ◀" : ""}</div>
+      <div class="rank-auto">${p.auto > 0 ? "⚡" + p.auto + "/s" : ""}</div>
+      <div class="rank-score">${p.score || 0}</div>
+    `;
+    list.appendChild(row);
+  });
+});
+
+// ── UTILS ──
+function escHtml(s) {
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2500);
+}
 </script>
-
 </body>
 </html>
