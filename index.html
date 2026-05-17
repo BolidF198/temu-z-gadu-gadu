@@ -4,23 +4,16 @@
 <meta charset="UTF-8">
 <title>Komunikator</title>
 </head>
-
 <body>
-
 <h2>Komunikator</h2>
-
-<div id="chat" style="height:30px width:30px; overflow-y:auto; border:1px solid #ccc; padding:5px;"></div>
-
+<div id="chat" style="height:300px; width:500px; overflow-y:auto; border:1px solid #ccc; padding:5px;"></div>
 <input id="name" placeholder="Nazwa">
 <input id="msg" placeholder="Wiadomość">
 <button onclick="send()">Wyślij</button>
 
-<!-- Firebase CDN -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-
 <script>
-  // Konfiguracja Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyDskJZp0Vd3DRgmz_r7_AgVxUg3kx1W0j0",
     authDomain: "komunikator-18cb1.firebaseapp.com",
@@ -31,31 +24,47 @@
     appId: "1:880269350736:web:2da047f43fe93c792dbe55"
   };
 
-  // Inicjalizacja Firebase
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  // Funkcja wysyłania wiadomości
-  function send(){
+  // =====================
+  // Lista zakazanych słów
+  // =====================
+  const bannedWords = ['porn', 'porno', 'http', 'hub'];
+
+  function filterMsg(text) {
+    let filtered = text;
+    bannedWords.forEach(word => {
+      const regex = new RegExp(word, 'gi');
+      filtered = filtered.replace(regex, '##########################');
+    });
+    return filtered;
+  }
+
+  function send() {
     const name = document.getElementById("name").value.trim();
     const msg = document.getElementById("msg").value.trim();
-    if(name && msg){
-      db.ref("messages").push({name:name, msg:msg});
-      document.getElementById("msg").value="";
+    if (name && msg) {
+      const filteredMsg = filterMsg(msg);
+      db.ref("messages").push({ name: name, msg: filteredMsg });
+      document.getElementById("msg").value = "";
     }
   }
+
+  document.getElementById("msg").addEventListener("keydown", e => {
+    if (e.key === "Enter") send();
+  });
+
   window.send = send;
 
-  // Pobieranie i wyświetlanie wiadomości
   const chat = document.getElementById("chat");
-  db.ref("messages").on("child_added", function(data){
+  db.ref("messages").on("child_added", function(data) {
     const m = data.val();
     const p = document.createElement("p");
     p.innerHTML = "<b>" + m.name + ":</b> " + m.msg;
     chat.appendChild(p);
-    chat.scrollTop = chat.scrollHeight; // auto scroll w dół
+    chat.scrollTop = chat.scrollHeight;
   });
 </script>
-
 </body>
 </html>
